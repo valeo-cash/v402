@@ -35,7 +35,7 @@
     "prepublishOnly": "pnpm build",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@noble/ed25519": "^2.1.0"
