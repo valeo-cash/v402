@@ -77,8 +77,8 @@ export function v402Gateway(ctx: GatewayContext) {
       (req as Request & { v402TxSig?: string }).v402TxSig = result.txSig;
       (req as Request & { v402RequestHash?: string }).v402RequestHash = requestHashHeader;
 
-      const intentId = (req as Request & { v402IntentId?: string }).v402IntentId;
-      const txSig = (req as Request & { v402TxSig?: string }).v402TxSig;
+      const completedIntentId = (req as Request & { v402IntentId?: string }).v402IntentId;
+      const completedTxSig = (req as Request & { v402TxSig?: string }).v402TxSig;
       const hash = (req as Request & { v402RequestHash?: string }).v402RequestHash;
       const origEnd = res.end.bind(res);
       res.end = function (
@@ -88,9 +88,10 @@ export function v402Gateway(ctx: GatewayContext) {
       ): Response {
         const cb = typeof encodingOrCb === "function" ? encodingOrCb : callback;
         const enc = typeof encodingOrCb === "function" ? undefined : (encodingOrCb as BufferEncoding | undefined);
-        if (!intentId || !txSig || !hash) {
-          if (cb) origEnd(chunk, enc, cb);
-          else if (enc) origEnd(chunk, enc);
+        const encoding = enc ?? "utf8";
+        if (!completedIntentId || !completedTxSig || !hash) {
+          if (cb) origEnd(chunk, encoding, cb);
+          else if (enc) origEnd(chunk, encoding);
           else origEnd(chunk);
           return res;
         }
@@ -98,11 +99,11 @@ export function v402Gateway(ctx: GatewayContext) {
         const headers = res.getHeaders() as Record<string, string>;
         const bodyStr =
           chunk == null ? "" : typeof chunk === "string" ? chunk : Buffer.isBuffer(chunk) ? chunk.toString("utf8") : String(chunk);
-        completeWithReceipt(ctx, intentId, txSig, hash, status, headers, bodyStr)
+        completeWithReceipt(ctx, completedIntentId, completedTxSig, hash, status, headers, bodyStr)
           .then((r) => {
             res.set("V402-Receipt", JSON.stringify(r.payload));
-            if (cb) origEnd(chunk, enc, cb);
-            else if (enc) origEnd(chunk, enc);
+            if (cb) origEnd(chunk, encoding, cb);
+            else if (enc) origEnd(chunk, encoding);
             else origEnd(chunk);
           })
           .catch((err) => next(err));

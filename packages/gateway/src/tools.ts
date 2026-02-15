@@ -51,11 +51,15 @@ export async function findToolByPath(
 
   if (!tools?.length) return null;
 
+  type SupabaseToolRow = Omit<ToolRow, "merchants"> & {
+    merchants?: { signing_public_key: string; signing_private_key_encrypted: string }[] | ToolRow["merchants"];
+  };
   for (const t of tools) {
-    const pattern = (t as ToolRow).path_pattern;
+    const pattern = (t as SupabaseToolRow).path_pattern;
     if (matchPathPattern(pattern, normalizedPath)) {
       const row = t as unknown as ToolRow;
-      row.merchants = (t as { merchants: ToolRow["merchants"] }).merchants ?? null;
+      const raw = (t as SupabaseToolRow).merchants;
+      row.merchants = Array.isArray(raw) ? raw[0] ?? null : raw ?? null;
       return row;
     }
   }

@@ -4,7 +4,7 @@
  * Skips when SOLANA_RPC_URL (or full env) is missing.
  */
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import Fastify from "fastify";
+import Fastify, { type FastifyRequest, type FastifyReply } from "fastify";
 import { createGatewayContext, v402GatewayFastify, encryptMerchantKey } from "@v402pay/gateway";
 import { createV402Client, createKeypairAdapter } from "@v402pay/sdk";
 import { canonicalToolMetadata, signEd25519Message } from "@v402pay/core";
@@ -39,7 +39,7 @@ describe.skipIf(!hasEnv)("v402 gateway Fastify integration", () => {
     const seed = signingKeypair.secretKey.slice(0, 32);
     const pubHex = Buffer.from(await ed25519.getPublicKeyAsync(seed)).toString("hex");
     const encKey = process.env.ENCRYPTION_KEY!;
-    const encrypted = encryptMerchantKey(seed.toString("hex"), encKey);
+    const encrypted = encryptMerchantKey(Buffer.from(seed).toString("hex"), encKey);
 
     const { data: userData, error: userErr } = await supabase.auth.admin.createUser({
       email: `v402-test-${Date.now()}@v402.local`,
@@ -104,7 +104,7 @@ describe.skipIf(!hasEnv)("v402 gateway Fastify integration", () => {
     const ctx = createGatewayContext(process.env as NodeJS.ProcessEnv);
     fastify = Fastify({ logger: false });
     await v402GatewayFastify(ctx, fastify);
-    fastify.post("/pay", async (_, reply) => reply.send({ ok: true }));
+    fastify.post("/pay", async (_req: FastifyRequest, reply: FastifyReply) => reply.send({ ok: true }));
     await fastify.listen({ port: PORT, host: "127.0.0.1" });
   }, 15000);
 
