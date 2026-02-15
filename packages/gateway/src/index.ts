@@ -6,4 +6,8 @@ export { getGatewayConfig } from "./config.js";
 export type { GatewayConfig } from "./config.js";
 export { v402Gateway, rawBodyParser } from "./middleware/express.js";
 export { v402GatewayFastify } from "./middleware/fastify.js";
+export { withV402Gateway } from "./next.js";
+export type { NextRouteHandler } from "./next.js";
 export { encryptMerchantKey, decryptMerchantKey } from "./encrypt.js";
+export { checkPolicy, safeParseDecimal } from "./policy.js";
+export { RateLimitError } from "./rate-limit.js";

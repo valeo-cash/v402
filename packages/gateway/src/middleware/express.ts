@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import type { GatewayContext } from "../flow.js";
 import { handleV402, completeWithReceipt } from "../flow.js";
+import { RateLimitError } from "../rate-limit.js";
 
 const INTENT_HEADER = "v402-intent";
 const TX_HEADER = "v402-tx";
@@ -76,31 +77,46 @@ export function v402Gateway(ctx: GatewayContext) {
       (req as Request & { v402TxSig?: string }).v402TxSig = result.txSig;
       (req as Request & { v402RequestHash?: string }).v402RequestHash = requestHashHeader;
 
-      const origSend = res.send.bind(res);
-      res.send = function (body: unknown): Response {
+      const intentId = (req as Request & { v402IntentId?: string }).v402IntentId;
+      const txSig = (req as Request & { v402TxSig?: string }).v402TxSig;
+      const hash = (req as Request & { v402RequestHash?: string }).v402RequestHash;
+      const origEnd = res.end.bind(res);
+      res.end = function (
+        chunk?: unknown,
+        encodingOrCb?: BufferEncoding | (() => void),
+        callback?: () => void
+      ): Response {
+        const cb = typeof encodingOrCb === "function" ? encodingOrCb : callback;
+        const enc = typeof encodingOrCb === "function" ? undefined : (encodingOrCb as BufferEncoding | undefined);
+        if (!intentId || !txSig || !hash) {
+          if (cb) origEnd(chunk, enc, cb);
+          else if (enc) origEnd(chunk, enc);
+          else origEnd(chunk);
+          return res;
+        }
         const status = res.statusCode;
         const headers = res.getHeaders() as Record<string, string>;
-        const bodyStr = typeof body === "string" ? body : JSON.stringify(body);
-        const intentId = (req as Request & { v402IntentId?: string }).v402IntentId;
-        const txSig = (req as Request & { v402TxSig?: string }).v402TxSig;
-        const hash = (req as Request & { v402RequestHash?: string }).v402RequestHash;
-        if (intentId && txSig && hash) {
-          completeWithReceipt(ctx, intentId, txSig, hash, status, headers, bodyStr)
-            .then((r) => {
-              res.set("V402-Receipt", JSON.stringify(r.payload));
-              origSend(body);
-            })
-            .catch((err) => {
-              next(err);
-            });
-        } else {
-          origSend(body);
-        }
+        const bodyStr =
+          chunk == null ? "" : typeof chunk === "string" ? chunk : Buffer.isBuffer(chunk) ? chunk.toString("utf8") : String(chunk);
+        completeWithReceipt(ctx, intentId, txSig, hash, status, headers, bodyStr)
+          .then((r) => {
+            res.set("V402-Receipt", JSON.stringify(r.payload));
+            if (cb) origEnd(chunk, enc, cb);
+            else if (enc) origEnd(chunk, enc);
+            else origEnd(chunk);
+          })
+          .catch((err) => next(err));
         return res;
       };
 
       next();
     } catch (err) {
+      if (err instanceof RateLimitError) {
+        res.status(429);
+        if (err.retryAfter != null) res.set("Retry-After", String(err.retryAfter));
+        res.send(err.message);
+        return;
+      }
       next(err);
     }
   };

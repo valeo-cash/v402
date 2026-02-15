@@ -10,6 +10,10 @@ export type GatewayConfig = {
   v402CloudUrl?: string;
   /** Test only: skip on-chain/Cloud verification and accept any proof; emit a fake receipt. Do not set in production. */
   testMode?: boolean;
+  /** Max 402 intents per key per window (default 60). */
+  intentRateLimit?: number;
+  /** Rate limit window in ms (default 60000). */
+  intentRateWindowMs?: number;
 };
 
 export function getGatewayConfig(env: NodeJS.ProcessEnv): GatewayConfig {
@@ -28,6 +32,8 @@ export function getGatewayConfig(env: NodeJS.ProcessEnv): GatewayConfig {
       "Gateway requires either V402_API_KEY (Cloud) or SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SOLANA_RPC_URL, USDC_MINT, ENCRYPTION_KEY"
     );
   }
+  const intentRateLimit = env.V402_INTENT_RATE_LIMIT != null ? parseInt(env.V402_INTENT_RATE_LIMIT, 10) : undefined;
+  const intentRateWindowMs = env.V402_INTENT_RATE_WINDOW_MS != null ? parseInt(env.V402_INTENT_RATE_WINDOW_MS, 10) : undefined;
   return {
     supabaseUrl,
     supabaseServiceRoleKey,
@@ -38,5 +44,7 @@ export function getGatewayConfig(env: NodeJS.ProcessEnv): GatewayConfig {
     v402ApiKey,
     v402CloudUrl,
     testMode: testMode || undefined,
+    intentRateLimit: Number.isFinite(intentRateLimit) ? intentRateLimit : undefined,
+    intentRateWindowMs: Number.isFinite(intentRateWindowMs) ? intentRateWindowMs : undefined,
   };
 }

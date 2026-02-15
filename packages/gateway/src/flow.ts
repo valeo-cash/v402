@@ -15,10 +15,11 @@ import {
   markIntentConsumed,
   dbIntentToPaymentIntent,
 } from "./intent.js";
-import { getPolicyByPayer, checkPolicy, getDailySpend, incrementDailySpend } from "./policy.js";
+import { getPolicyByPayer, checkPolicy, getDailySpend, incrementDailySpend, safeParseDecimal } from "./policy.js";
 import { verifyPayment } from "./verify.js";
 import { createAndStoreReceipt } from "./receipt.js";
 import { createCloudAdapter, type CloudAdapter } from "./cloud-adapter.js";
+import { checkRateLimit, getRateLimitKey, RateLimitError } from "./rate-limit.js";
 
 export type GatewayContext = {
   config: GatewayConfig;
@@ -120,18 +121,23 @@ export async function handleV402(
       const tw = toolRow.data as { tool_id: string; merchant_wallet: string } | null;
       const policy = await getPolicyByPayer(ctx.supabase, payer);
       const dailySpend = await getDailySpend(ctx.supabase, payer);
+      const amountNum = safeParseDecimal(String(intentRow.amount));
       const check = checkPolicy(policy ?? {}, {
-        amount: parseFloat(intentRow.amount),
+        amount: amountNum,
         toolId: tw?.tool_id ?? "",
         merchantWallet: tw?.merchant_wallet ?? "",
         dailySpend,
       });
       if (!check.allowed) throw new Error(check.reason ?? "Policy denied");
 
-      await incrementDailySpend(ctx.supabase, payer, parseFloat(intentRow.amount));
+      await incrementDailySpend(ctx.supabase, payer, amountNum);
       return { type: "forward", upstreamRequest: req, intentId: intentRow.intent_id, txSig: txHeader };
     }
   }
+
+  const rlKey = getRateLimitKey(req);
+  const rl = checkRateLimit(rlKey, ctx.config);
+  if (!rl.allowed) throw new RateLimitError("Too many intent requests", rl.retryAfter);
 
   const baseUrl = req.headers["x-forwarded-host"]
     ? `${req.headers["x-forwarded-proto"] ?? "https"}://${req.headers["x-forwarded-host"]}`

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { createV402Client } from "@v402pay/sdk";
+import { createV402Client, V402PaymentError } from "@v402pay/sdk";
 import type { PaymentIntent } from "@v402pay/core";
 
 const mockIntent: PaymentIntent = {
@@ -75,7 +75,7 @@ describe("V402 client", () => {
     expect(retryCall?.headers?.get?.("V402-Request-Hash")).toBeTruthy();
   });
 
-  it("on 402 with expired intent returns 402 response", async () => {
+  it("on 402 with expired intent throws V402PaymentError with INTENT_EXPIRED", async () => {
     const expiredIntent: PaymentIntent = {
       ...mockIntent,
       expiresAt: new Date(Date.now() - 1000).toISOString(),
@@ -91,8 +91,14 @@ describe("V402 client", () => {
       fetch: mockFetch,
       walletAdapter: adapter as any,
     });
-    const res = await fetch("https://api.example.com/pay");
-    expect(res.status).toBe(402);
+    let err: unknown;
+    try {
+      await fetch("https://api.example.com/pay");
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(V402PaymentError);
+    expect((err as V402PaymentError).code).toBe("INTENT_EXPIRED");
     expect(adapter.pay).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,7 @@
 import type { FastifyRequest, FastifyReply, FastifyInstance } from "fastify";
 import type { GatewayContext } from "../flow.js";
 import { handleV402, completeWithReceipt } from "../flow.js";
+import { RateLimitError } from "../rate-limit.js";
 
 const INTENT_HEADER = "v402-intent";
 const TX_HEADER = "v402-tx";
@@ -80,6 +81,11 @@ export async function v402GatewayFastify(
       (request as FastifyRequest & { v402TxSig?: string }).v402TxSig = result.txSig;
       (request as FastifyRequest & { v402RequestHash?: string }).v402RequestHash = requestHashHeader;
     } catch (err) {
+      if (err instanceof RateLimitError) {
+        const status = 429;
+        if (err.retryAfter != null) reply.header("Retry-After", String(err.retryAfter));
+        return reply.status(status).send(err.message);
+      }
       return reply.send(err);
     }
   });

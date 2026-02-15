@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { GatewayContext } from "../flow.js";
 import { handleV402, completeWithReceipt } from "../flow.js";
+import { RateLimitError } from "../rate-limit.js";
 
 const INTENT_HEADER = "v402-intent";
 const TX_HEADER = "v402-tx";
@@ -50,6 +51,14 @@ export function withV402Gateway(ctx: GatewayContext, handler: NextRouteHandler):
     try {
       result = await handleV402(ctx, incoming, intentId, txSig, requestHashHeader);
     } catch (err) {
+      if (err instanceof RateLimitError) {
+        const headers: HeadersInit = { "Content-Type": "application/json" };
+        if (err.retryAfter != null) headers["Retry-After"] = String(err.retryAfter);
+        return new NextResponse(
+          JSON.stringify({ error: err.message }),
+          { status: 429, headers }
+        );
+      }
       return new NextResponse(
         JSON.stringify({ error: err instanceof Error ? err.message : "Gateway error" }),
         { status: 500, headers: { "Content-Type": "application/json" } }

@@ -1,5 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+/**
+ * Parse a decimal string to number for policy comparisons. Throws if invalid (avoids NaN).
+ */
+export function safeParseDecimal(value: string): number {
+  const s = String(value).trim();
+  if (!/^-?\d+(\.\d+)?$/.test(s)) throw new Error(`Invalid decimal amount: ${value}`);
+  const n = Number(s);
+  if (!Number.isFinite(n)) throw new Error(`Invalid decimal amount: ${value}`);
+  return n;
+}
+
 export type PolicyRow = {
   max_spend_per_day: string | null;
   max_spend_per_call: string | null;
@@ -32,11 +43,11 @@ export function checkPolicy(
   const p = policy as PolicyRow;
 
   if (p.max_spend_per_call != null) {
-    const cap = parseFloat(p.max_spend_per_call);
+    const cap = safeParseDecimal(p.max_spend_per_call);
     if (params.amount > cap) return { allowed: false, reason: "max_spend_per_call exceeded" };
   }
   if (p.max_spend_per_day != null) {
-    const cap = parseFloat(p.max_spend_per_day);
+    const cap = safeParseDecimal(p.max_spend_per_day);
     if (params.dailySpend + params.amount > cap)
       return { allowed: false, reason: "max_spend_per_day exceeded" };
   }
@@ -62,7 +73,7 @@ export async function getDailySpend(
     .eq("payer", payer)
     .eq("date_utc", today)
     .maybeSingle();
-  return data?.amount != null ? parseFloat(String(data.amount)) : 0;
+  return data?.amount != null ? safeParseDecimal(String(data.amount)) : 0;
 }
 
 export async function incrementDailySpend(
@@ -71,29 +82,10 @@ export async function incrementDailySpend(
   amount: number
 ): Promise<void> {
   const today = new Date().toISOString().slice(0, 10);
-  const { data: existing } = await supabase
-    .from("daily_spend")
-    .select("id, amount")
-    .eq("payer", payer)
-    .eq("date_utc", today)
-    .maybeSingle();
-
-  const newAmount = (existing?.amount != null ? parseFloat(String(existing.amount)) : 0) + amount;
-  const now = new Date().toISOString();
-
-  if (existing) {
-    const { error } = await supabase
-      .from("daily_spend")
-      .update({ amount: newAmount, updated_at: now })
-      .eq("id", existing.id);
-    if (error) throw new Error(`Failed to update daily_spend: ${error.message}`);
-  } else {
-    const { error } = await supabase.from("daily_spend").insert({
-      payer,
-      date_utc: today,
-      amount: newAmount,
-      updated_at: now,
-    });
-    if (error) throw new Error(`Failed to insert daily_spend: ${error.message}`);
-  }
+  const { error } = await supabase.rpc("increment_daily_spend", {
+    p_payer: payer,
+    p_date: today,
+    p_amount: String(amount),
+  });
+  if (error) throw new Error(`Failed to increment daily_spend: ${error.message}`);
 }
