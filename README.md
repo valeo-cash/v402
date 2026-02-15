@@ -1,5 +1,8 @@
 # v402
 
+[![CI](https://github.com/valeo-cash/v402/actions/workflows/ci.yml/badge.svg)](https://github.com/valeo-cash/v402/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@v402pay/core)](https://www.npmjs.com/package/@v402pay/core)
+
 **v402** is a non-custodial payment protocol for AI agents and APIs on Solana. Servers return HTTP 402; clients pay with USDC or SOL from their wallet, then retry with proof. Settlement is verified on-chain. No mocks, no custodial keys—real payments and signed receipts.
 
 **Why v402 over x402:** Capability-based permissions (each intent scoped to one request), replay-safe receipts, and proof-of-execution so the server knows payment landed before running the tool. Stays non-custodial: the server never touches user keys.

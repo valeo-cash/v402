@@ -15,8 +15,10 @@
   "bin": { "v402pay": "./dist/cli.js" },
   "files": ["dist"],
   "sideEffects": false,
+  "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "pnpm build",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
     "test": "echo 'No unit tests in sdk'"

@@ -8,7 +8,7 @@ Gateway middleware for v402pay: intent creation, payment verification, policy ch
 npm install @v402pay/gateway
 ```
 
-Peer dependencies (optional): `express`, `fastify`, or `next` depending on your stack.
+Peer dependencies (optional): `express`, `fastify`, or `next` depending on your stack. For Next.js App Router, import from `@v402pay/gateway/next`: `import { withV402Gateway } from "@v402pay/gateway/next"`.
 
 ## Env
 

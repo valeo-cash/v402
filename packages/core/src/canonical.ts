@@ -54,7 +54,8 @@ export function buildCanonicalRequest(input: CanonicalRequestInput): string {
   const path = normalizePath(input.path);
   const query = input.query ?? {};
   const queryStr = buildSortedQuery(query);
-  const contentType = input.contentType ?? "";
+  // Normalize so client and gateway match (e.g. "application/json; charset=utf-8" → "application/json")
+  const contentType = (input.contentType ?? "").split(";")[0].trim();
 
   let bodyPart: string;
   const rawBody = input.body;

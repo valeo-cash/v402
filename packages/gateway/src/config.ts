@@ -8,6 +8,8 @@ export type GatewayConfig = {
   /** When set, gateway uses v402 Cloud instead of Supabase */
   v402ApiKey?: string;
   v402CloudUrl?: string;
+  /** Test only: skip on-chain/Cloud verification and accept any proof; emit a fake receipt. Do not set in production. */
+  testMode?: boolean;
 };
 
 export function getGatewayConfig(env: NodeJS.ProcessEnv): GatewayConfig {
@@ -18,6 +20,7 @@ export function getGatewayConfig(env: NodeJS.ProcessEnv): GatewayConfig {
   const encryptionKey = env.ENCRYPTION_KEY ?? "";
   const v402ApiKey = env.V402_API_KEY ?? undefined;
   const v402CloudUrl = env.V402_CLOUD_URL ?? "https://api.v402pay.com";
+  const testMode = env.V402_TEST_MODE === "true" || env.V402_TEST_MODE === "1";
 
   const useCloud = !!v402ApiKey;
   if (!useCloud && (!supabaseUrl || !supabaseServiceRoleKey || !solanaRpcUrl || !usdcMint || !encryptionKey)) {
@@ -34,5 +37,6 @@ export function getGatewayConfig(env: NodeJS.ProcessEnv): GatewayConfig {
     commitment: (env.V402_COMMITMENT as "processed" | "confirmed" | "finalized") ?? "confirmed",
     v402ApiKey,
     v402CloudUrl,
+    testMode: testMode || undefined,
   };
 }

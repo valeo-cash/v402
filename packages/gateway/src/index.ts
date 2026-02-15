@@ -6,6 +6,4 @@ export { getGatewayConfig } from "./config.js";
 export type { GatewayConfig } from "./config.js";
 export { v402Gateway, rawBodyParser } from "./middleware/express.js";
 export { v402GatewayFastify } from "./middleware/fastify.js";
-export { withV402Gateway } from "./middleware/next.js";
-export type { NextRouteHandler } from "./middleware/next.js";
 export { encryptMerchantKey, decryptMerchantKey } from "./encrypt.js";

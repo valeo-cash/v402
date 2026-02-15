@@ -1,0 +1,109 @@
+diff --git a/README.md b/README.md
+index 2f9f253..69fa2fb 100644
+--- a/README.md
++++ b/README.md
+@@ -1,10 +1,32 @@
+-# v402pay
++# v402
+ 
+-**v402pay** is a non-custodial payments and execution protocol for AI agents on Solana. It uses HTTP 402 to request payment; settlement is real (USDC SPL or SOL) and verified on-chain.
++**v402** is a non-custodial payment protocol for AI agents and APIs on Solana. Servers return HTTP 402; clients pay with USDC or SOL from their wallet, then retry with proof. Settlement is verified on-chain. No mocks, no custodial keys—real payments and signed receipts.
+ 
+-- **Non-custodial**: The server never stores or uses user private keys.
+-- **Real**: No mocks; persisted DB, real payment verification, tool registry, policies, receipts.
+-- **NPM packages**: `@v402pay/core`, `@v402pay/sdk`, `@v402pay/gateway`.
++**Why v402 over x402:** Capability-based permissions (each intent scoped to one request), replay-safe receipts, and proof-of-execution so the server knows payment landed before running the tool. Stays non-custodial: the server never touches user keys.
++
++**Integrate in under a minute:** Install the gateway and SDK, mount the middleware on your server, and use the client to call your paid endpoint. First request returns 402 with payment details; after the client pays and retries, you get 200 and a signed receipt.
++
++```javascript
++// Server (e.g. Fastify)
++import { createGatewayContext, v402GatewayFastify } from "@v402pay/gateway";
++const ctx = createGatewayContext(process.env);
++await v402GatewayFastify(ctx, fastify);
++fastify.post("/pay", async (_, reply) => reply.send({ ok: true }));
++
++// Client
++import { createV402Client, createKeypairAdapter } from "@v402pay/sdk";
++const { fetch } = createV402Client({ walletAdapter: createKeypairAdapter({ keypair, rpcUrl }) });
++const res = await fetch("https://your-api.com/pay", { method: "POST", body: JSON.stringify({}) });
++// 402 → pay → retry → 200 with V402-Receipt
++```
++
++## Conceptual flow
++
++1. **402 + intent** – Server returns 402 with payment intent (amount, recipient, reference).
++2. **Pay from wallet** – Client signs and sends USDC/SOL on Solana with a memo binding the payment to the intent.
++3. **Retry with proof** – Client retries the request with payment proof (e.g. signature or tx reference).
++4. **Verify on-chain** – Gateway (or v402 Cloud) verifies the transaction and memo on Solana.
++5. **Execute + signed receipt** – Server runs the tool and returns 200 with a signed `V402-Receipt` header.
+ 
+ ## Repo structure
+ 
+@@ -15,14 +37,26 @@
+ - `infra/supabase/migrations` – Schema and RLS
+ - `docs/spec.md` – Protocol spec; `docs/integrations/` – integration examples
+ 
+-## How to run locally
++## Getting started
+ 
+-**Prerequisites:** Node.js 20+ and pnpm. If pnpm is not installed:
++**Prerequisites:** Node.js 20+ and pnpm. If pnpm is not installed: `npm install -g pnpm`.
++
++### Cloud mode (recommended)
++
++Set `V402_API_KEY` and optionally `V402_CLOUD_URL` (default: `https://api.v402pay.com`). No Supabase or database to run. Register your tool in the v402 Cloud dashboard, then run your server with the gateway; it will use Cloud for intents, verification, and receipts.
+ 
+ ```bash
+-npm install -g pnpm
++# .env
++V402_API_KEY=ck_live_xxx
++# optional: V402_CLOUD_URL, MERCHANT_WALLET, TOOL_ID
+ ```
+ 
++Build and run your gateway as in the 60-second snippet above. Clients use `@v402pay/sdk` against your paid URL.
++
++### Self-hosted (local bootstrap)
++
++Full control: you run Supabase, the web dashboard, and your own tool registry. Requires Supabase and env setup.
++
+ 1. **Supabase**
+ 
+    ```bash
+@@ -51,17 +85,9 @@ npm install -g pnpm
+ 
+ Set `.env` in repo root and in `apps/web`: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `SOLANA_RPC_URL`, `USDC_MINT`, `ENCRYPTION_KEY` (32-byte hex), and in web `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+ 
+-## Plug-and-play (zero friction)
+-
+-**One-time setup:** Start Supabase and apply migrations, then set `.env` at repo root (see above).
+-
+-```bash
+-cd infra/supabase && supabase start
+-supabase db push
+-# Copy .env.example to .env and set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ENCRYPTION_KEY (32-byte hex), SOLANA_RPC_URL, USDC_MINT
+-```
++### Local bootstrap (one-command server)
+ 
+-**One command to run the merchant server** (seeds a demo user + tool, then starts the server; no web UI):
++After Supabase and env are set (see above), you can run a minimal merchant server that seeds a local user and tool, then starts the server (no web UI):
+ 
+ ```bash
+ pnpm install && pnpm -r build
+@@ -76,7 +102,7 @@ npx @v402pay/sdk http://localhost:4040/pay
+ 
+ First call returns 402; the CLI uses a new Keypair with no SOL by default. To get 200, airdrop to that keypair on devnet or use your own keypair in code (see SDK README).
+ 
+-## End-to-end real run (no demos)
++## End-to-end self-hosted run
+ 
+ After Supabase and env are set (see above), run in order:
+ 
+@@ -95,7 +121,7 @@ pnpm --filter web dev
+ 
+ Log in at http://localhost:3000 (magic link), set your Solana receiver wallet on the Tools page, then create one tool (name, base URL e.g. `http://localhost:4040`, path pattern e.g. `/pay`, per-call amount, merchant wallet). Leave the web app running.
+ 
+-**3. Start a real merchant tool server** (in another terminal)
++**3. Start a merchant tool server** (in another terminal)
+ 
+ Copy-paste the following into `merchant-server.mjs` at repo root (or use the existing file), then run `node merchant-server.mjs`. Requires env: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SOLANA_RPC_URL`, `USDC_MINT`, `ENCRYPTION_KEY`.

@@ -35,7 +35,14 @@ export function createV402Client(options: V402ClientOptions) {
     parsed.searchParams.forEach((v, k) => {
       query[k] = v;
     });
-    const contentType = init?.contentType ?? (init?.headers as Record<string, string> | undefined)?.["content-type"];
+    const rawHeaders = init?.headers;
+    const contentType =
+      init?.contentType ??
+      (rawHeaders instanceof Headers
+        ? rawHeaders.get("content-type") ?? undefined
+        : rawHeaders && typeof rawHeaders === "object"
+          ? (Object.entries(rawHeaders as Record<string, string>).find(([k]) => k.toLowerCase() === "content-type")?.[1] ?? undefined)
+          : undefined);
     let body: string | Uint8Array | undefined;
     if (init?.body !== undefined) {
       body =
