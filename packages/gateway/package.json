@@ -34,7 +34,7 @@
     "prepublishOnly": "pnpm build",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@v402pay/core": "workspace:*",
