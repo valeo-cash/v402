@@ -1,0 +1,40 @@
+{
+  "name": "@v402pay/sdk",
+  "version": "0.1.0",
+  "description": "v402pay client: 402 → pay → retry with wallet adapter",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "bin": { "v402pay": "./dist/cli.js" },
+  "files": ["dist"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts",
+    "test": "echo 'No unit tests in sdk'"
+  },
+  "dependencies": {
+    "@v402pay/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "~5.6.0"
+  },
+  "peerDependencies": {
+    "@solana/web3.js": "^1.95.0",
+    "@solana/spl-token": "^0.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@solana/web3.js": { "optional": true },
+    "@solana/spl-token": { "optional": true }
+  }
+}
