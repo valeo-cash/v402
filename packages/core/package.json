@@ -1,6 +1,6 @@
 {
   "name": "@v402pay/core",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "v402pay types, canonicalization, hashing, and Solana verification",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -17,6 +17,7 @@
   ],
   "sideEffects": false,
   "license": "MIT",
+  "homepage": "https://github.com/valeo-cash/v402#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/valeo-cash/v402.git",

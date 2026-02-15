@@ -1,6 +1,6 @@
 {
   "name": "@v402pay/gateway",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "v402pay gateway middleware for Express, Fastify, and Next.js",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -26,6 +26,15 @@
     "dist"
   ],
   "sideEffects": false,
+  "license": "MIT",
+  "homepage": "https://github.com/valeo-cash/v402#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/valeo-cash/v402.git",
+    "directory": "packages/gateway"
+  },
+  "author": "Valeo",
+  "keywords": ["v402", "payment", "solana", "usdc", "402", "web3", "gateway", "middleware", "express", "fastify", "nextjs"],
   "publishConfig": {
     "access": "public"
   },
@@ -37,7 +46,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@v402pay/core": "workspace:*",
+    "@v402pay/core": "0.2.2",
     "@supabase/supabase-js": "^2.47.0"
   },
   "devDependencies": {
