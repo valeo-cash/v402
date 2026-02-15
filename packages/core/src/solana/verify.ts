@@ -202,19 +202,20 @@ export async function verifySolanaPayment(
       // for (mint, intent.recipient) via @solana/spl-token and compare to info.destination — no extra RPC.
       // If those packages are not available, fall back to getTokenAccountOwner RPC (Option B style).
       try {
-        // Optional peer deps: not required at build time. Use string to avoid TS resolving module.
-        const web3Mod = await import(
+        // Optional peer deps: cast through unknown so DTS build doesn't require resolving @solana/* types.
+        const web3Mod = (await import(
           /* @ts-ignore - optional peer dependency */
           "@solana/web3.js"
-        ) as { PublicKey: new (s: string) => { toBase58(): string } };
-        const splMod = await import(
+        )) as unknown as { PublicKey: new (s: string) => { toBase58(): string } };
+        const splMod = (await import(
           /* @ts-ignore - optional peer dependency */
           "@solana/spl-token"
-        ) as { getAssociatedTokenAddressSync: (mint: { toBase58(): string }, owner: { toBase58(): string }) => { toBase58(): string } };
-        const expectedAta = splMod.getAssociatedTokenAddressSync(
-          new web3Mod.PublicKey(effectiveUsdcMint),
-          new web3Mod.PublicKey(intent.recipient)
-        );
+        )) as unknown as {
+          getAssociatedTokenAddressSync(mint: { toBase58(): string }, owner: { toBase58(): string }): { toBase58(): string };
+        };
+        const mintPk = new web3Mod.PublicKey(effectiveUsdcMint);
+        const ownerPk = new web3Mod.PublicKey(intent.recipient);
+        const expectedAta = splMod.getAssociatedTokenAddressSync(mintPk, ownerPk);
         if (dest !== expectedAta.toBase58()) {
           throw new Error(
             `USDC transfer destination ${dest} is not the recipient's ATA for intent.recipient (expected ${expectedAta.toBase58()})`
