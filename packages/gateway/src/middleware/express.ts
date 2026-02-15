@@ -113,7 +113,7 @@ export function rawBodyParser(
   req: Request,
   res: Response,
   buf: Buffer,
-  encoding: string
+  _encoding: string
 ): void {
   (req as Request & { rawBody?: Buffer }).rawBody = buf;
 }

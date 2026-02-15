@@ -2,8 +2,12 @@
 
 [![CI](https://github.com/valeo-cash/v402/actions/workflows/ci.yml/badge.svg)](https://github.com/valeo-cash/v402/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@v402pay/core)](https://www.npmjs.com/package/@v402pay/core)
+[![npm](https://img.shields.io/npm/v/@v402pay/sdk)](https://www.npmjs.com/package/@v402pay/sdk)
+[![npm](https://img.shields.io/npm/v/@v402pay/gateway)](https://www.npmjs.com/package/@v402pay/gateway)
 
 **v402** is a non-custodial payment protocol for AI agents and APIs on Solana. Servers return HTTP 402; clients pay with USDC or SOL from their wallet, then retry with proof. Settlement is verified on-chain. No mocks, no custodial keys—real payments and signed receipts.
+
+> **GitHub:** Set the repo About description (Settings → General) to: *v402 — non-custodial payment protocol for AI agents on Solana*.
 
 **Why v402 over x402:** Capability-based permissions (each intent scoped to one request), replay-safe receipts, and proof-of-execution so the server knows payment landed before running the tool. Stays non-custodial: the server never touches user keys.
 
@@ -21,6 +25,20 @@ import { createV402Client, createKeypairAdapter } from "@v402pay/sdk";
 const { fetch } = createV402Client({ walletAdapter: createKeypairAdapter({ keypair, rpcUrl }) });
 const res = await fetch("https://your-api.com/pay", { method: "POST", body: JSON.stringify({}) });
 // 402 → pay → retry → 200 with V402-Receipt
+```
+
+### Try it locally in 30 seconds
+
+With Supabase and env already set (see Self-hosted below), run the seed+server in one terminal, then call the paid endpoint from anywhere. First request returns 402; after paying (e.g. airdrop to the CLI keypair on devnet), retry to get 200.
+
+```bash
+# Terminal 1 (from repo root)
+pnpm play
+```
+
+```bash
+# Anywhere
+npx @v402pay/sdk http://localhost:4040/pay
 ```
 
 ## Conceptual flow
@@ -56,6 +74,23 @@ V402_API_KEY=ck_live_xxx
 
 Build and run your gateway as in the 60-second snippet above. Clients use `@v402pay/sdk` against your paid URL.
 
+<details>
+<summary><strong>Full environment variable reference</strong></summary>
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SUPABASE_URL` | Self-hosted, Web app | Supabase project URL |
+| `SUPABASE_ANON_KEY` | Self-hosted, Web app | Supabase anonymous (public) key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Self-hosted | Supabase service role key (server-only) |
+| `DATABASE_URL` | Self-hosted | PostgreSQL connection string |
+| `SOLANA_RPC_URL` | Self-hosted | Solana RPC endpoint (e.g. Helius, mainnet/devnet) |
+| `USDC_MINT` | Self-hosted | SPL token mint address for USDC |
+| `ENCRYPTION_KEY` | Self-hosted | 32-byte hex key for encrypting merchant keys at rest |
+| `NEXT_PUBLIC_SUPABASE_URL` | Web app | Supabase URL (exposed to client) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Web app | Supabase anon key (exposed to client) |
+
+</details>
+
 ### Self-hosted (local bootstrap)
 
 Full control: you run Supabase, the web dashboard, and your own tool registry. Requires Supabase and env setup.
@@ -90,20 +125,7 @@ Set `.env` in repo root and in `apps/web`: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, 
 
 ### Local bootstrap (one-command server)
 
-After Supabase and env are set (see above), you can run a minimal merchant server that seeds a local user and tool, then starts the server (no web UI):
-
-```bash
-pnpm install && pnpm -r build
-pnpm play
-```
-
-**Call it from anywhere** (no repo, no script — just npx):
-
-```bash
-npx @v402pay/sdk http://localhost:4040/pay
-```
-
-First call returns 402; the CLI uses a new Keypair with no SOL by default. To get 200, airdrop to that keypair on devnet or use your own keypair in code (see SDK README).
+Same flow as **Try it locally in 30 seconds** above: after Supabase and env are set, `pnpm play` starts the seeded server; call it with `npx @v402pay/sdk http://localhost:4040/pay`. First call returns 402; to get 200, airdrop to the CLI keypair on devnet or use your own keypair in code (see SDK README).
 
 ## End-to-end self-hosted run
 
@@ -187,6 +209,8 @@ pnpm release
 ```
 
 Ensure you are logged in (`npm login`) and have publish rights. For CI, set `NPM_TOKEN`. Publish runs `changeset publish` with `--access public`.
+
+**Tag the release** so GitHub releases match npm versions: `git tag vX.Y.Z` (e.g. `v0.2.1`), then `git push --tags`.
 
 **Versioning:** With one patch changeset, `pnpm version` bumps to 0.1.1; with no changesets, versions stay 0.1.0.
 

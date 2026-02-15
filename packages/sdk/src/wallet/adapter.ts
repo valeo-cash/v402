@@ -21,12 +21,16 @@ export interface V402WalletAdapter {
   getPublicKey?(): Promise<string> | string;
 }
 
+/**
+ * Map a PaymentIntent from a 402 response to PayParams for the wallet adapter.
+ * Passes through optional mint when present on the intent.
+ */
 export function intentToPayParams(intent: PaymentIntent): PayParams {
   return {
     recipient: intent.recipient,
     amount: intent.amount,
     currency: intent.currency,
     reference: intent.reference,
-    mint: intent.currency === "USDC" ? undefined : undefined,
+    mint: intent.mint ?? undefined,
   };
 }

@@ -11,6 +11,9 @@ export default [
       globals: { Buffer: "readonly", process: "readonly", console: "readonly", fetch: "readonly", crypto: "readonly", setTimeout: "readonly", clearTimeout: "readonly", window: "readonly" },
     },
     plugins: { "@typescript-eslint": tsPlugin },
-    rules: { "no-unused-vars": "off", "@typescript-eslint/no-unused-vars": "warn" },
+    rules: {
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+    },
   },
 ];

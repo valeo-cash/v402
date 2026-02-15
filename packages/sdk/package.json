@@ -1,6 +1,6 @@
 {
   "name": "@v402pay/sdk",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "v402pay client: 402 → pay → retry with wallet adapter",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -19,6 +19,24 @@
     "dist"
   ],
   "sideEffects": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/valeo-cash/v402.git",
+    "directory": "packages/sdk"
+  },
+  "keywords": [
+    "v402",
+    "payment",
+    "solana",
+    "usdc",
+    "402",
+    "web3"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Valeo",
   "publishConfig": {
     "access": "public"
   },
@@ -27,7 +45,7 @@
     "prepublishOnly": "pnpm build",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
-    "test": "echo 'No unit tests in sdk'"
+    "test": "vitest run"
   },
   "dependencies": {
     "@v402pay/core": "workspace:*"
@@ -35,7 +53,8 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "tsup": "^8.3.5",
-    "typescript": "~5.6.0"
+    "typescript": "~5.6.0",
+    "vitest": "^2.1.6"
   },
   "peerDependencies": {
     "@solana/web3.js": "^1.95.0",

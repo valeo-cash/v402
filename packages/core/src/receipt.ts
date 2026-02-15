@@ -115,9 +115,8 @@ export async function signEd25519Message(
 ): Promise<string> {
   const data = Buffer.from(message, "utf8");
   if (typeof privateKeyOrSeed === "string" && privateKeyOrSeed.startsWith("-----")) {
-    const { sign: nodeSign } = await import("crypto");
-    const key = (await import("crypto")).createPrivateKey(privateKeyOrSeed);
-    const sig = nodeSign(null, data, key);
+    const key = createPrivateKey(privateKeyOrSeed);
+    const sig = sign("ed25519", data, key);
     return Buffer.from(sig).toString("base64");
   }
   const seed =

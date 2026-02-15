@@ -1,9 +1,16 @@
 import type { PaymentIntent } from "../types.js";
 import type { VerifiedPayment } from "../types.js";
+import { parseAmount } from "../amount.js";
 import { MEMO_PROGRAM_ID, hasV402Memo } from "./memo.js";
+
+/** SOL uses 9 decimals (lamports). */
+export const SOL_DECIMALS = 9;
 
 /** USDC uses 6 decimals on mainnet and devnet. */
 export const USDC_DECIMALS = 6;
+
+const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
+const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
 export type SolanaVerifyConfig = {
   rpcUrl: string;
@@ -38,6 +45,29 @@ type JsonParsedTx = {
 
 function getPubkey(acc: { pubkey: string } | string): string {
   return typeof acc === "string" ? acc : acc.pubkey;
+}
+
+/**
+ * Fetch SPL token account owner via RPC (jsonParsed). Used to verify USDC transfer
+ * destination belongs to intent.recipient.
+ */
+async function getTokenAccountOwner(rpcUrl: string, accountAddress: string): Promise<string | null> {
+  const res = await fetch(rpcUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "v402-token-owner",
+      method: "getAccountInfo",
+      params: [accountAddress, { encoding: "jsonParsed" }],
+    }),
+  });
+  const json = (await res.json()) as {
+    result?: { value?: { data?: { parsed?: { info?: { owner?: string } } } } };
+    error?: { message: string };
+  };
+  if (json.error) return null;
+  return json.result?.value?.data?.parsed?.info?.owner ?? null;
 }
 
 function collectMemoData(instructions: JsonParsedInstruction[]): { data: string }[] {
@@ -102,25 +132,34 @@ export async function verifySolanaPayment(
 
   const message = tx.transaction.message;
   const accountKeys = message.accountKeys ?? [];
-  const instructions = (message.instructions ?? []) as JsonParsedInstruction[];
+  const topLevel = (message.instructions ?? []) as JsonParsedInstruction[];
+  const inner = tx.meta?.innerInstructions ?? [];
+  const allInstructions = [
+    ...topLevel,
+    ...inner.flatMap((g) => g.instructions),
+  ] as JsonParsedInstruction[];
 
   const memos = parseMemoInstructions(tx);
   if (!hasV402Memo(memos, intent.reference)) {
     throw new Error(`Missing Memo instruction with v402:${intent.reference}`);
   }
 
-  const amountWei = intent.currency === "SOL" ? BigInt(Math.ceil(parseFloat(intent.amount) * 1e9)) : null;
   const usdcDecimals = config.usdcDecimals ?? USDC_DECIMALS;
-  const amountTokensRaw = intent.currency === "USDC" ? Math.ceil(parseFloat(intent.amount) * 10 ** usdcDecimals) : null;
+  const amountWei =
+    intent.currency === "SOL" ? parseAmount(intent.amount, SOL_DECIMALS) : null;
+  const amountTokensRaw =
+    intent.currency === "USDC" ? parseAmount(intent.amount, usdcDecimals) : null;
+
+  const effectiveUsdcMint = intent.mint ?? config.usdcMint;
 
   let payer: string | null = null;
   const feePayer = accountKeys[0] != null ? getPubkey(accountKeys[0]) : null;
 
   if (intent.currency === "SOL") {
     let found = false;
-    for (const ix of instructions) {
+    for (const ix of allInstructions) {
       const program = (ix.programId ?? ix.program) as string | undefined;
-      if (program !== "11111111111111111111111111111111") continue;
+      if (program !== SYSTEM_PROGRAM_ID) continue;
       const parsed = ix.parsed as { type?: string; info?: { destination?: string; lamports?: number } } | undefined;
       if (parsed?.type === "transfer" && parsed.info?.destination === intent.recipient) {
         const lamports = parsed.info.lamports ?? 0;
@@ -132,11 +171,11 @@ export async function verifySolanaPayment(
     if (!found) throw new Error("SOL transfer to recipient not found");
     payer = feePayer;
   } else {
-    // USDC SPL
+    // USDC SPL: verify transfer to intent recipient (destination token account owner)
     let found = false;
-    for (const ix of instructions) {
+    for (const ix of allInstructions) {
       const program = (ix.programId ?? ix.program) as string | undefined;
-      if (program !== "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA") continue;
+      if (program !== TOKEN_PROGRAM_ID) continue;
       const parsed = ix.parsed as {
         type?: string;
         info?: {
@@ -150,13 +189,51 @@ export async function verifySolanaPayment(
       if (parsed?.type !== "transfer") continue;
       const info = parsed.info;
       if (!info) continue;
-      if (info.mint !== config.usdcMint) continue;
+      const mint = info.mint;
+      if (mint != null && mint !== effectiveUsdcMint) continue;
       const dest = info.destination;
       const amt = info.amount;
       const sourceOwner = info.sourceOwner;
       if (!dest || !amt || !sourceOwner) continue;
-      const numAmt = parseInt(amt, 10);
+      const numAmt = BigInt(amt);
       if (amountTokensRaw != null && numAmt < amountTokensRaw) throw new Error("USDC amount too low");
+
+      // Verify destination corresponds to intent.recipient. Option A (preferred): derive expected ATA
+      // for (mint, intent.recipient) via @solana/spl-token and compare to info.destination — no extra RPC.
+      // If those packages are not available, fall back to getTokenAccountOwner RPC (Option B style).
+      try {
+        // Optional peer deps: not required at build time. Use string to avoid TS resolving module.
+        const web3Mod = await import(
+          /* @ts-ignore - optional peer dependency */
+          "@solana/web3.js"
+        ) as { PublicKey: new (s: string) => { toBase58(): string } };
+        const splMod = await import(
+          /* @ts-ignore - optional peer dependency */
+          "@solana/spl-token"
+        ) as { getAssociatedTokenAddressSync: (mint: { toBase58(): string }, owner: { toBase58(): string }) => { toBase58(): string } };
+        const expectedAta = splMod.getAssociatedTokenAddressSync(
+          new web3Mod.PublicKey(effectiveUsdcMint),
+          new web3Mod.PublicKey(intent.recipient)
+        );
+        if (dest !== expectedAta.toBase58()) {
+          throw new Error(
+            `USDC transfer destination ${dest} is not the recipient's ATA for intent.recipient (expected ${expectedAta.toBase58()})`
+          );
+        }
+      } catch (ataErr) {
+        if (ataErr instanceof Error && !ataErr.message.includes("recipient's ATA")) {
+          // Packages not available or other error: fall back to RPC to verify destination owner.
+          const destOwner = await getTokenAccountOwner(url, dest);
+          if (destOwner !== intent.recipient) {
+            throw new Error(
+              `USDC transfer destination owner ${destOwner ?? "unknown"} does not match intent recipient ${intent.recipient}`
+            );
+          }
+        } else {
+          throw ataErr;
+        }
+      }
+
       payer = sourceOwner;
       found = true;
       break;

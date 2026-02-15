@@ -1,10 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  signReceipt,
-  responseHash,
-  buildCanonicalReceiptPayload,
-  type ReceiptPayload,
-} from "@v402pay/core";
+import { signReceipt, responseHash, type ReceiptPayload } from "@v402pay/core";
 import { decryptMerchantKey } from "./encrypt.js";
 
 export async function createAndStoreReceipt(

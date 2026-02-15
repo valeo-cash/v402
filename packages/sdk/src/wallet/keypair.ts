@@ -3,8 +3,12 @@
  * UNSAFE for production: never use in browser or with real funds.
  */
 
+import { parseAmount } from "@v402pay/core";
 import type { Keypair } from "@solana/web3.js";
 import type { V402WalletAdapter, PayParams, PayResult } from "./adapter.js";
+
+const SOL_DECIMALS = 9;
+const USDC_DECIMALS = 6;
 
 export type KeypairAdapterOptions = {
   /** Keypair (e.g. from @solana/web3.js Keypair.generate() or fromSecretKey) */
@@ -25,7 +29,7 @@ export function createKeypairAdapter(options: KeypairAdapterOptions): V402Wallet
       const memoData = new TextEncoder().encode(`v402:${params.reference}`);
 
       if (params.currency === "SOL") {
-        const lamports = Math.ceil(parseFloat(params.amount) * 1e9);
+        const lamports = Number(parseAmount(params.amount, SOL_DECIMALS));
         const tx = new mod.Transaction().add(
           mod.SystemProgram.transfer({
             fromPubkey: signer.publicKey,
@@ -45,6 +49,7 @@ export function createKeypairAdapter(options: KeypairAdapterOptions): V402Wallet
       const splToken = await import("@solana/spl-token").catch(() => {
         throw new Error("Install @solana/spl-token for USDC payments");
       });
+      // Use params.mint when provided (e.g. from intent); mainnet USDC mint is fallback only.
       const mint = new mod.PublicKey(params.mint ?? "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
       const dest = await splToken.getAssociatedTokenAddress(
         mint,
@@ -54,7 +59,7 @@ export function createKeypairAdapter(options: KeypairAdapterOptions): V402Wallet
         mint,
         signer.publicKey
       );
-      const amount = Math.ceil(parseFloat(params.amount) * 1e6);
+      const amount = Number(parseAmount(params.amount, USDC_DECIMALS));
       const tx = new mod.Transaction()
         .add(
           splToken.createTransferInstruction(

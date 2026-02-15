@@ -138,8 +138,6 @@ export async function handleV402(
     : req.headers.origin ?? "";
 
   if (ctx.cloudAdapter) {
-    const body =
-      typeof req.body === "string" ? req.body : Buffer.from(req.body).toString("utf8");
     const intent = await ctx.cloudAdapter.createIntent({
       method: req.method,
       path: req.path,

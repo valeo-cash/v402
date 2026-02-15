@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { encryptMerchantKey, decryptMerchantKey } from "../encrypt.js";
 
-const key32 = "0".repeat(64).replace(/./g, (_, i) => (i % 16).toString(16)).slice(0, 64);
 const validKey = "a".repeat(64);
 
 describe("encrypt/decrypt roundtrip", () => {

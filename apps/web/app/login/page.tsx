@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -22,7 +23,7 @@ export default function LoginPage() {
     return (
       <main className="mx-auto max-w-md px-6 py-16">
         <p className="text-zinc-300">Check your email for the magic link.</p>
-        <a href="/" className="mt-4 inline-block text-sky-400 hover:underline">Back home</a>
+        <Link href="/" className="mt-4 inline-block text-sky-400 hover:underline">Back home</Link>
       </main>
     );
   }

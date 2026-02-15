@@ -1,11 +1,12 @@
 export * from "./types.js";
+export { parseAmount } from "./amount.js";
 export * from "./canonical.js";
 export * from "./hash.js";
 export * from "./receipt.js";
 export { verifyEd25519Message, signEd25519Message } from "./receipt.js";
 export { buildCanonicalRequest, stableStringify } from "./canonical.js";
 export { requestHash, sha256Hex } from "./hash.js";
-export { verifySolanaPayment, USDC_DECIMALS } from "./solana/verify.js";
+export { verifySolanaPayment, USDC_DECIMALS, SOL_DECIMALS } from "./solana/verify.js";
 export type { SolanaVerifyConfig } from "./solana/verify.js";
 export { canonicalToolMetadata } from "./tool-metadata.js";
 export type { ToolMetadataInput } from "./tool-metadata.js";

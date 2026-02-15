@@ -3,6 +3,9 @@ export const V402_MEMO_PREFIX = "v402:";
 export type Currency = "USDC" | "SOL";
 export type Chain = "solana";
 
+/** Solana network identifier. */
+export type SolanaNetwork = "mainnet-beta" | "devnet" | "testnet";
+
 export type PaymentIntent = {
   intentId: string;
   toolId: string;
@@ -14,6 +17,23 @@ export type PaymentIntent = {
   expiresAt: string;
   requestHash: string;
   payer?: string;
+  /** SPL token mint (e.g. USDC). When present, used for USDC transfer verification and adapter. */
+  mint?: string;
+  /** Solana network (e.g. mainnet-beta, devnet). */
+  network?: SolanaNetwork;
+};
+
+/** Headers sent by the client on retry after payment. */
+export type V402PaymentHeaders = {
+  "V402-Intent": string;
+  "V402-Tx": string;
+  "V402-Request-Hash": string;
+};
+
+/** Server response shape when payment was verified (e.g. receipt attached). */
+export type V402Response = {
+  receipt?: ReceiptPayload;
+  receiptSignature?: string;
 };
 
 export type ReceiptPayload = {

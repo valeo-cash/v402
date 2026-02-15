@@ -1,6 +1,6 @@
 {
   "name": "@v402pay/gateway",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "v402pay gateway middleware for Express, Fastify, and Next.js",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

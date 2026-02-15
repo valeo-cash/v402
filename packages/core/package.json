@@ -1,6 +1,6 @@
 {
   "name": "@v402pay/core",
-  "version": "0.1.1",
+  "version": "0.2.1",
   "description": "v402pay types, canonicalization, hashing, and Solana verification",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -16,6 +16,17 @@
     "dist"
   ],
   "sideEffects": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/valeo-cash/v402.git",
+    "directory": "packages/core"
+  },
+  "keywords": ["v402", "payment", "solana", "usdc", "402", "web3"],
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Valeo",
   "publishConfig": {
     "access": "public"
   },
@@ -28,6 +39,14 @@
   },
   "dependencies": {
     "@noble/ed25519": "^2.1.0"
+  },
+  "peerDependencies": {
+    "@solana/spl-token": "^0.4.0",
+    "@solana/web3.js": "^1.95.0"
+  },
+  "peerDependenciesMeta": {
+    "@solana/spl-token": { "optional": true },
+    "@solana/web3.js": { "optional": true }
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
