@@ -1,6 +1,6 @@
 {
   "name": "@v402pay/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "v402pay types, canonicalization, hashing, and Solana verification",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -12,9 +12,13 @@
       "require": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "prepublishOnly": "pnpm build",

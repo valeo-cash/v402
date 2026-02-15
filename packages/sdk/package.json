@@ -1,6 +1,6 @@
 {
   "name": "@v402pay/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "v402pay client: 402 → pay → retry with wallet adapter",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -12,10 +12,16 @@
       "require": "./dist/index.js"
     }
   },
-  "bin": { "v402pay": "./dist/cli.js" },
-  "files": ["dist"],
+  "bin": {
+    "v402pay": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "prepublishOnly": "pnpm build",
@@ -36,7 +42,11 @@
     "@solana/spl-token": "^0.4.0"
   },
   "peerDependenciesMeta": {
-    "@solana/web3.js": { "optional": true },
-    "@solana/spl-token": { "optional": true }
+    "@solana/web3.js": {
+      "optional": true
+    },
+    "@solana/spl-token": {
+      "optional": true
+    }
   }
 }
