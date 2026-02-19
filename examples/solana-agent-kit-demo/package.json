@@ -1,0 +1,12 @@
+{
+  "name": "v402-sak-demo",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build": "echo 'skip — run with tsx'",
+    "agent": "npx tsx agent.ts"
+  },
+  "dependencies": {
+    "@v402pay/solana-agent-kit": "workspace:*"
+  }
+}

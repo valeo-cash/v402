@@ -1,0 +1,36 @@
+{
+  "name": "@v402pay/solana-agent-kit",
+  "version": "0.3.0",
+  "description": "Solana Agent Kit v2 plugin for v402 agent payments with spending controls",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "Valeo",
+  "homepage": "https://github.com/valeo-cash/v402#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/valeo-cash/v402.git",
+    "directory": "packages/integrations/solana-agent-kit"
+  },
+  "keywords": ["v402", "solana-agent-kit", "sendai", "ai-agent", "payment", "solana", "spending-controls", "mcp"],
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "lint": "eslint src"
+  },
+  "peerDependencies": {
+    "solana-agent-kit": ">=1.0.0"
+  },
+  "dependencies": {
+    "@v402pay/agent": "workspace:0.3.0",
+    "@v402pay/core": "workspace:0.3.0",
+    "@v402pay/sdk": "workspace:0.3.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "~5.6.0"
+  }
+}

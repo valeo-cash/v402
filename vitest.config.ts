@@ -10,6 +10,7 @@ export default defineConfig({
       "packages/mcp-server/tests/**/*.test.ts",
       "packages/mcp-client/tests/**/*.test.ts",
       "packages/agent/tests/**/*.test.ts",
+      "packages/integrations/solana-agent-kit/tests/**/*.test.ts",
     ],
     environment: "node",
     include: [
@@ -17,6 +18,7 @@ export default defineConfig({
       "packages/mcp-server/tests/**/*.test.ts",
       "packages/mcp-client/tests/**/*.test.ts",
       "packages/agent/tests/**/*.test.ts",
+      "packages/integrations/solana-agent-kit/tests/**/*.test.ts",
     ],
     setupFiles: [path.resolve(root, "tests/setup.ts")],
     server: {
@@ -40,6 +42,7 @@ export default defineConfig({
       "@v402pay/mcp-server": path.join(root, "packages/mcp-server/src/index.ts"),
       "@v402pay/mcp-client": path.join(root, "packages/mcp-client/src/index.ts"),
       "@v402pay/agent": path.join(root, "packages/agent/src/index.ts"),
+      "@v402pay/solana-agent-kit": path.join(root, "packages/integrations/solana-agent-kit/src/index.ts"),
     },
   },
 });

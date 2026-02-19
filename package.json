@@ -42,6 +42,7 @@
     "@v402pay/mcp-client": "workspace:*",
     "@v402pay/agent": "workspace:*",
     "@v402pay/langchain": "workspace:*",
-    "@v402pay/crewai": "workspace:*"
+    "@v402pay/crewai": "workspace:*",
+    "@v402pay/solana-agent-kit": "workspace:*"
   }
 }

@@ -94,6 +94,7 @@ No facilitator. No custodial keys. The gateway verifies the Solana transaction d
 | [`@v402pay/mcp-client`](packages/mcp-client) | MCP client with automatic payment and policy enforcement |
 | [`@v402pay/langchain`](packages/integrations/langchain) | LangChain integration — v402 paid tools as LangChain StructuredTools |
 | [`@v402pay/crewai`](packages/integrations/crewai) | CrewAI integration — v402 paid tools for CrewAI agents |
+| [`@v402pay/solana-agent-kit`](packages/integrations/solana-agent-kit) | Solana Agent Kit v2 plugin — spending controls for SAK agents |
 | [`apps/web`](apps/web) | Next.js dashboard (Supabase Auth, tool registry, receipts, policies) |
 
 ## Framework integrations
@@ -200,6 +201,7 @@ cd ../mcp-client && npm publish --access public
 cd ../agent && npm publish --access public
 cd ../integrations/langchain && npm publish --access public
 cd ../integrations/crewai && npm publish --access public
+cd ../integrations/solana-agent-kit && npm publish --access public
 
 # Tag and push
 git add -A && git commit -m "v0.3.0: tool-aware intents, MCP integration, agent SDK"
