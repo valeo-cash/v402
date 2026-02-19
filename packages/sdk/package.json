@@ -1,6 +1,6 @@
 {
   "name": "@v402pay/sdk",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "v402pay client: 402 → pay → retry with wallet adapter",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -12,61 +12,42 @@
       "require": "./dist/index.js"
     }
   },
-  "bin": {
-    "v402pay": "./dist/cli.js"
-  },
-  "files": [
-    "dist"
-  ],
+  "bin": { "v402pay": "./dist/cli.js" },
+  "files": ["dist"],
   "sideEffects": false,
   "license": "MIT",
+  "author": "Valeo",
   "homepage": "https://github.com/valeo-cash/v402#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/valeo-cash/v402.git",
     "directory": "packages/sdk"
   },
-  "keywords": [
-    "v402",
-    "payment",
-    "solana",
-    "usdc",
-    "402",
-    "web3"
-  ],
-  "engines": {
-    "node": ">=18"
-  },
-  "author": "Valeo",
-  "publishConfig": {
-    "access": "public"
-  },
+  "keywords": ["v402", "payment", "solana", "usdc", "402", "web3", "ai-agent", "wallet"],
+  "engines": { "node": ">=18" },
+  "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsup",
     "prepublishOnly": "pnpm build",
     "clean": "rm -rf dist",
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint src",
     "test": "vitest run"
   },
   "dependencies": {
-    "@v402pay/core": "0.2.2"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "tsup": "^8.3.5",
-    "typescript": "~5.6.0",
-    "vitest": "^2.1.6"
+    "@v402pay/core": "workspace:0.3.0"
   },
   "peerDependencies": {
     "@solana/web3.js": "^1.95.0",
     "@solana/spl-token": "^0.4.0"
   },
   "peerDependenciesMeta": {
-    "@solana/web3.js": {
-      "optional": true
-    },
-    "@solana/spl-token": {
-      "optional": true
-    }
+    "@solana/web3.js": { "optional": true },
+    "@solana/spl-token": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "~5.6.0",
+    "vitest": "^2.1.6"
   }
 }

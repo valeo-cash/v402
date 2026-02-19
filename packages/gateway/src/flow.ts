@@ -14,8 +14,10 @@ import {
   markIntentPaidVerified,
   markIntentConsumed,
   dbIntentToPaymentIntent,
+  findActiveSessionIntent,
+  incrementCallsUsed,
 } from "./intent.js";
-import { getPolicyByPayer, checkPolicy, getDailySpend, incrementDailySpend, safeParseDecimal } from "./policy.js";
+import { getPolicyByPayer, checkPolicy, checkToolPolicy, checkSessionAllowed, getDailySpend, incrementDailySpend, safeParseDecimal } from "./policy.js";
 import { verifyPayment } from "./verify.js";
 import { createAndStoreReceipt } from "./receipt.js";
 import { createCloudAdapter, type CloudAdapter } from "./cloud-adapter.js";
@@ -68,6 +70,24 @@ export async function handleV402(
     contentType: req.contentType,
   });
   const hash = requestHash(canonical);
+
+  // --- Session billing: reuse a paid session intent if calls remain ---
+  const sessionIdHeader = req.headers["v402-session"] as string | undefined;
+  if (sessionIdHeader && !ctx.cloudAdapter && ctx.supabase) {
+    const sessionIntent = await findActiveSessionIntent(ctx.supabase, sessionIdHeader);
+    if (sessionIntent) {
+      const sessionCheck = checkSessionAllowed(sessionIntent);
+      if (sessionCheck.allowed) {
+        await incrementCallsUsed(ctx.supabase, sessionIntent.intent_id);
+        return {
+          type: "forward",
+          upstreamRequest: req,
+          intentId: sessionIntent.intent_id,
+          txSig: "session",
+        };
+      }
+    }
+  }
 
   if (intentIdHeader && txHeader && requestHashHeader && requestHashHeader === hash) {
     if (ctx.cloudAdapter) {
@@ -130,6 +150,18 @@ export async function handleV402(
       });
       if (!check.allowed) throw new Error(check.reason ?? "Policy denied");
 
+      const toolPolicyCheck = checkToolPolicy(tw?.tool_id, {
+        allowlisted_tool_ids: (policy as Record<string, unknown> | null)?.allowlisted_tool_ids as string[] | undefined,
+      });
+      if (!toolPolicyCheck.allowed) throw new Error(toolPolicyCheck.reason ?? "Tool policy denied");
+
+      // Session intent: check call limit
+      if (intentRow.max_calls != null) {
+        const sessionCheck = checkSessionAllowed(intentRow);
+        if (!sessionCheck.allowed) throw new Error(sessionCheck.reason ?? "Session limit reached");
+        await incrementCallsUsed(ctx.supabase, intentRow.intent_id);
+      }
+
       await incrementDailySpend(ctx.supabase, payer, amountNum);
       return { type: "forward", upstreamRequest: req, intentId: intentRow.intent_id, txSig: txHeader };
     }
@@ -163,6 +195,7 @@ export async function handleV402(
   if (!validSig) throw new Error("Tool metadata signature invalid");
 
   const amount = resolveAmount(tool as ToolRow);
+  const spendingAccount = req.headers["v402-spending-account"] as string | undefined;
   const intentRow = await createIntent(ctx.supabase, {
     toolId: tool.tool_id,
     toolDbId: tool.id,
@@ -170,6 +203,8 @@ export async function handleV402(
     currency: tool.accepted_currency,
     recipient: tool.merchant_wallet,
     requestHash: hash,
+    sessionId: sessionIdHeader,
+    spendingAccount,
   });
 
   const intent: PaymentIntent = {

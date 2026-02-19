@@ -1,0 +1,32 @@
+{
+  "name": "@v402pay/mcp-client",
+  "version": "0.3.0",
+  "description": "MCP client with automatic v402 payment handling for AI agents",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "Valeo",
+  "homepage": "https://github.com/valeo-cash/v402#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/valeo-cash/v402.git",
+    "directory": "packages/mcp-client"
+  },
+  "keywords": ["v402", "payment", "solana", "ai-agent", "mcp", "model-context-protocol", "tool-client"],
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@v402pay/sdk": "workspace:0.3.0",
+    "@v402pay/core": "workspace:0.3.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.0"
+  }
+}

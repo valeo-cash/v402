@@ -1,0 +1,32 @@
+{
+  "name": "@v402pay/mcp-server",
+  "version": "0.3.0",
+  "description": "MCP server with v402 payment gating for AI agent tool access",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "Valeo",
+  "homepage": "https://github.com/valeo-cash/v402#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/valeo-cash/v402.git",
+    "directory": "packages/mcp-server"
+  },
+  "keywords": ["v402", "payment", "solana", "ai-agent", "mcp", "model-context-protocol", "tool-server"],
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@v402pay/gateway": "workspace:0.3.0",
+    "@v402pay/core": "workspace:0.3.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.0"
+  }
+}

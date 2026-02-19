@@ -1,0 +1,33 @@
+{
+  "name": "@v402pay/langchain",
+  "version": "0.3.0",
+  "description": "LangChain integration for v402 paid tool access",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "Valeo",
+  "homepage": "https://github.com/valeo-cash/v402#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/valeo-cash/v402.git",
+    "directory": "packages/integrations/langchain"
+  },
+  "keywords": ["v402", "payment", "solana", "ai-agent", "langchain", "tool", "mcp"],
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "lint": "eslint src"
+  },
+  "peerDependencies": {
+    "langchain": ">=0.1.0",
+    "@langchain/core": ">=0.1.0"
+  },
+  "dependencies": {
+    "@v402pay/agent": "workspace:0.3.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.0"
+  }
+}

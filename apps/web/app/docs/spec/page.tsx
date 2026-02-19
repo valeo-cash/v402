@@ -10,8 +10,13 @@ export default function SpecPage() {
     content = "See repo docs/spec.md for the protocol specification.";
   }
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <pre className="whitespace-pre-wrap font-sans text-sm text-zinc-300">{content}</pre>
-    </main>
+    <article className="max-w-3xl py-8">
+      <h1 className="mb-6 text-3xl font-bold tracking-tight">
+        Protocol Specification v1
+      </h1>
+      <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-zinc-300">
+        {content}
+      </pre>
+    </article>
   );
 }

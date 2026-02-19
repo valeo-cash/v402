@@ -11,3 +11,5 @@ dist
 coverage
 .changeset/*.md
 !.changeset/config.json
+.pnpm-store
+node_modules

@@ -1,0 +1,7 @@
+src/
+tests/
+tsconfig.json
+*.test.*
+*.spec.*
+.eslintrc*
+.turbo/

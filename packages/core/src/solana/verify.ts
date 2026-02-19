@@ -243,6 +243,7 @@ export async function verifySolanaPayment(
   }
 
   if (!payer) throw new Error("Could not derive payer");
+  if (intent.payer && intent.payer !== payer) throw new Error("Payer mismatch");
 
   return { txSig: txSignature, payer, blockTime };
 }

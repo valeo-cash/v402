@@ -1,0 +1,32 @@
+{
+  "name": "@v402pay/agent",
+  "version": "0.3.0",
+  "description": "AI agent payment SDK — v402 protocol with built-in spending controls",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "Valeo",
+  "homepage": "https://github.com/valeo-cash/v402#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/valeo-cash/v402.git",
+    "directory": "packages/agent"
+  },
+  "keywords": ["v402", "ai-agent", "payment", "solana", "spending-controls", "mcp", "autonomous"],
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@v402pay/sdk": "workspace:0.3.0",
+    "@v402pay/core": "workspace:0.3.0",
+    "@v402pay/mcp-client": "workspace:0.3.0",
+    "@v402pay/mcp-server": "workspace:0.3.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.0"
+  }
+}

@@ -1,3 +1,12 @@
+export interface RouteConfig {
+  amount: string;
+  currency: "SOL" | "USDC";
+  merchant: string;
+  tool_id?: string;
+  max_calls_per_session?: number;
+  require_spending_account?: boolean;
+}
+
 export type GatewayConfig = {
   supabaseUrl: string;
   supabaseServiceRoleKey: string;

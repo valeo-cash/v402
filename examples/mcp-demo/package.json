@@ -1,0 +1,17 @@
+{
+  "name": "v402-mcp-demo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "v402 MCP payment-gated tools demo",
+  "scripts": {
+    "build": "echo 'skip — run examples with tsx'",
+    "server": "npx tsx server.ts",
+    "client": "npx tsx client.ts"
+  },
+  "dependencies": {
+    "@v402pay/mcp-server": "workspace:*",
+    "@v402pay/mcp-client": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.25.0"
+  }
+}

@@ -16,6 +16,11 @@ export type DbPaymentIntent = {
   request_hash: string;
   payer: string | null;
   status: string;
+  tool_params_hash?: string | null;
+  session_id?: string | null;
+  max_calls?: number | null;
+  calls_used?: number | null;
+  spending_account?: string | null;
 };
 
 export function dbIntentToPaymentIntent(row: DbPaymentIntent, requestHash: string): PaymentIntent {
@@ -102,31 +107,76 @@ export async function createIntent(
     currency: string;
     recipient: string;
     requestHash: string;
+    toolParamsHash?: string;
+    sessionId?: string;
+    maxCalls?: number;
+    spendingAccount?: string;
   }
 ): Promise<DbPaymentIntent> {
   const intentId = crypto.randomUUID();
   const reference = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + INTENT_EXPIRY_SECONDS * 1000).toISOString();
 
+  const row: Record<string, unknown> = {
+    intent_id: intentId,
+    tool_id: params.toolDbId,
+    amount: params.amount,
+    currency: params.currency,
+    chain: "solana",
+    recipient: params.recipient,
+    reference,
+    expires_at: expiresAt,
+    request_hash: params.requestHash,
+    status: "created",
+  };
+  if (params.toolParamsHash) row.tool_params_hash = params.toolParamsHash;
+  if (params.sessionId) row.session_id = params.sessionId;
+  if (params.maxCalls != null) {
+    row.max_calls = params.maxCalls;
+    row.calls_used = 0;
+  }
+  if (params.spendingAccount) row.spending_account = params.spendingAccount;
+
   const { data, error } = await supabase
     .from("payment_intents")
-    .insert({
-      intent_id: intentId,
-      tool_id: params.toolDbId,
-      amount: params.amount,
-      currency: params.currency,
-      chain: "solana",
-      recipient: params.recipient,
-      reference,
-      expires_at: expiresAt,
-      request_hash: params.requestHash,
-      status: "created",
-    })
+    .insert(row)
     .select("*")
     .single();
 
   if (error) throw new Error(`Failed to create intent: ${error.message}`);
   return data as DbPaymentIntent;
+}
+
+export async function findActiveSessionIntent(
+  supabase: SupabaseClient,
+  sessionId: string
+): Promise<DbPaymentIntent | null> {
+  const { data } = await supabase
+    .from("payment_intents")
+    .select("*")
+    .eq("session_id", sessionId)
+    .eq("status", "paid_verified")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data as DbPaymentIntent | null;
+}
+
+export async function incrementCallsUsed(
+  supabase: SupabaseClient,
+  intentId: string
+): Promise<void> {
+  const { data: row } = await supabase
+    .from("payment_intents")
+    .select("calls_used")
+    .eq("intent_id", intentId)
+    .single();
+  const current = (row as { calls_used?: number } | null)?.calls_used ?? 0;
+  const { error } = await supabase
+    .from("payment_intents")
+    .update({ calls_used: current + 1, updated_at: new Date().toISOString() })
+    .eq("intent_id", intentId);
+  if (error) throw new Error(`Failed to increment calls_used: ${error.message}`);
 }
 
 export async function markIntentPaidVerified(

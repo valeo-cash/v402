@@ -1,0 +1,9 @@
+src/
+tests/
+tsconfig.json
+tsup.config.ts
+*.test.*
+*.spec.*
+.eslintrc*
+.turbo/
+scripts/

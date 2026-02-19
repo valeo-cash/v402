@@ -14,7 +14,9 @@
     "db:push": "cd infra/supabase && supabase db push",
     "seed-demo": "pnpm --filter @v402pay/gateway exec node scripts/seed-demo.mjs",
     "server": "node merchant-server.mjs",
-    "play": "pnpm seed-demo && pnpm run server"
+    "play": "pnpm seed-demo && pnpm run server",
+    "docs:dev": "pnpm --filter web dev",
+    "docs:build": "pnpm --filter web build"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.10",
@@ -35,6 +37,11 @@
   "dependencies": {
     "@v402pay/core": "workspace:*",
     "@v402pay/gateway": "workspace:*",
-    "@v402pay/sdk": "workspace:*"
+    "@v402pay/sdk": "workspace:*",
+    "@v402pay/mcp-server": "workspace:*",
+    "@v402pay/mcp-client": "workspace:*",
+    "@v402pay/agent": "workspace:*",
+    "@v402pay/langchain": "workspace:*",
+    "@v402pay/crewai": "workspace:*"
   }
 }

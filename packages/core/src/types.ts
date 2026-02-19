@@ -73,3 +73,47 @@ export type VerifiedPayment = {
   payer: string;
   blockTime: number;
 };
+
+// ---------------------------------------------------------------------------
+// v2 — Tool-aware payment intents
+// ---------------------------------------------------------------------------
+
+export interface ToolPaymentIntent {
+  id: string;
+  merchant: string;
+  amount: string;
+  currency: "SOL" | "USDC";
+  tool_id?: string;
+  tool_params_hash?: string;
+  session_id?: string;
+  max_calls?: number;
+  calls_used?: number;
+  spending_account?: string;
+  expires_at: number;
+  memo: string;
+  payer?: string;
+}
+
+export interface V402ReceiptV2 {
+  version: 2;
+  intent_id: string;
+  tx_signature: string;
+  amount: string;
+  currency: string;
+  payer: string;
+  merchant: string;
+  tool_id?: string;
+  timestamp: number;
+  block_height: number;
+  receipt_hash: string;
+  signature: string;
+  signer_pubkey: string;
+}
+
+export interface AgentSpendingPolicy {
+  daily_cap: number;
+  per_call_cap?: number;
+  allowed_tools?: string[];
+  allowed_merchants?: string[];
+  expiry?: number;
+}
