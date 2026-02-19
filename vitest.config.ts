@@ -11,6 +11,7 @@ export default defineConfig({
       "packages/mcp-client/tests/**/*.test.ts",
       "packages/agent/tests/**/*.test.ts",
       "packages/integrations/solana-agent-kit/tests/**/*.test.ts",
+      "packages/integrations/openclaw/tests/**/*.test.ts",
     ],
     environment: "node",
     include: [
@@ -19,6 +20,7 @@ export default defineConfig({
       "packages/mcp-client/tests/**/*.test.ts",
       "packages/agent/tests/**/*.test.ts",
       "packages/integrations/solana-agent-kit/tests/**/*.test.ts",
+      "packages/integrations/openclaw/tests/**/*.test.ts",
     ],
     setupFiles: [path.resolve(root, "tests/setup.ts")],
     server: {

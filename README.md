@@ -95,6 +95,7 @@ No facilitator. No custodial keys. The gateway verifies the Solana transaction d
 | [`@v402pay/langchain`](packages/integrations/langchain) | LangChain integration — v402 paid tools as LangChain StructuredTools |
 | [`@v402pay/crewai`](packages/integrations/crewai) | CrewAI integration — v402 paid tools for CrewAI agents |
 | [`@v402pay/solana-agent-kit`](packages/integrations/solana-agent-kit) | Solana Agent Kit v2 plugin — spending controls for SAK agents |
+| [`v402 OpenClaw Skill`](packages/integrations/openclaw) | OpenClaw / AgentSkills skill for v402 payments (not an npm package) |
 | [`apps/web`](apps/web) | Next.js dashboard (Supabase Auth, tool registry, receipts, policies) |
 
 ## Framework integrations
@@ -202,6 +203,9 @@ cd ../agent && npm publish --access public
 cd ../integrations/langchain && npm publish --access public
 cd ../integrations/crewai && npm publish --access public
 cd ../integrations/solana-agent-kit && npm publish --access public
+
+# OpenClaw skill — distributed via ClawHub, not npm:
+# cd packages/integrations/openclaw && clawhub publish
 
 # Tag and push
 git add -A && git commit -m "v0.3.0: tool-aware intents, MCP integration, agent SDK"
