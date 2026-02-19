@@ -1,217 +1,100 @@
-# v402 — The Payment Protocol for Autonomous AI Agents
+# v402 — OpenClaw Skill
 
-[![CI](https://github.com/valeo-cash/v402/actions/workflows/ci.yml/badge.svg)](https://github.com/valeo-cash/v402/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@v402pay/core)](https://www.npmjs.com/package/@v402pay/core)
-[![npm](https://img.shields.io/npm/v/@v402pay/sdk)](https://www.npmjs.com/package/@v402pay/sdk)
-[![npm](https://img.shields.io/npm/v/@v402pay/gateway)](https://www.npmjs.com/package/@v402pay/gateway)
+OpenClaw / AgentSkills-compatible skill that teaches AI agents the v402 HTTP payment protocol on Solana. The agent learns to detect 402 responses, enforce spending policies, submit USDC payments on-chain, and verify Ed25519-signed receipts.
 
-> Non-custodial. Policy-enforced. No facilitator. Solana-native.
+## Install
 
-## Why v402
+### Via ClawHub
 
-**x402 lets agents pay. v402 lets agents pay _safely_.**
-
-When AI agents spend money autonomously, you need more than a payment rail — you need spending controls, per-tool budgets, signed receipts, and direct on-chain verification with no middleman holding funds. v402 is the protocol that makes autonomous agent payments safe by default.
-
-## The v402 difference
-
-| Feature | x402 | v402 |
-|---|---|---|
-| **Facilitator** | Required (Coinbase) | None — direct on-chain verification |
-| **Spending controls** | None | Built-in: daily caps, per-call limits, tool/merchant allowlists |
-| **Signed receipts** | No | Ed25519 signed, verifiable receipts |
-| **Tool-aware intents** | No | Yes — intents scoped to tool, session billing |
-| **Session billing** | No | Yes — one payment covers N calls |
-| **Chain** | Base (EVM) | Solana (USDC / SOL) |
-| **Custody** | Semi-custodial | Non-custodial — server never touches user keys |
-| **MCP integration** | No | Native MCP server & client packages |
-
-## Quick start — 60 seconds
-
-```typescript
-import { createAgent, createV402McpServer } from "@v402pay/agent";
-
-// Agent side — autonomous payments with safety rails
-const agent = createAgent({
-  wallet: myWalletAdapter,
-  spendingPolicy: {
-    dailyCap: 5.0,          // $5/day max
-    perCallCap: 0.50,       // 50¢ per tool call
-    allowedTools: ["web_search", "code_analysis"],
-  },
-});
-
-// Check before paying
-agent.canPay(0.25, "web_search");   // true
-agent.remainingBudget();             // 5.0
-
-// Server side — paid MCP tools
-const server = createV402McpServer({
-  tools: [
-    {
-      name: "web_search",
-      description: "Search the web",
-      inputSchema: { query: { type: "string" } },
-      price: "0.01",
-      currency: "USDC",
-      merchant: "MERCHANT_WALLET",
-      handler: async (args) => ({ results: ["..."] }),
-    },
-  ],
-  testMode: true,
-});
+```bash
+clawhub install v402
 ```
 
-## Architecture
+### Via Direct URL
 
-```
-Agent                           Gateway                        Tool Server
-  │                               │                               │
-  │─── GET /tool ────────────────>│                               │
-  │<── 402 + Payment Intent ──────│                               │
-  │                               │                               │
-  │─── Pay on-chain (Solana) ─────│                               │
-  │                               │                               │
-  │─── Retry + tx proof ─────────>│                               │
-  │                               │── Verify on-chain (no facilitator)
-  │                               │── Check spending policy       │
-  │                               │── Forward ───────────────────>│
-  │                               │<── Tool result ───────────────│
-  │<── 200 + Signed Receipt ──────│                               │
+```bash
+npx skills add https://github.com/valeo-cash/v402 --skill openclaw
 ```
 
-No facilitator. No custodial keys. The gateway verifies the Solana transaction directly, checks the agent's spending policy, then forwards to the tool.
+### Manual
 
-## Packages
+```bash
+cp -r packages/integrations/openclaw ~/.openclaw/skills/v402
+bash ~/.openclaw/skills/v402/scripts/install.sh
+```
 
-| Package | Description |
+## Configuration
+
+Add to `~/.openclaw/openclaw.json`:
+
+```json
+{
+  "skills": {
+    "entries": {
+      "v402": {
+        "enabled": true,
+        "env": {
+          "V402_WALLET_PRIVATE_KEY": "<base58-solana-private-key>",
+          "V402_DAILY_CAP": "5.0",
+          "V402_PER_CALL_CAP": "1.0",
+          "V402_ALLOWED_TOOLS": "web_search,get_token_price,get_balance"
+        }
+      }
+    }
+  }
+}
+```
+
+## What the Agent Can Do
+
+- **Detect 402 responses** — automatically parse `V402-Intent` headers
+- **Enforce spending policy** — daily caps, per-call limits, tool and merchant allowlists
+- **Submit payments** — USDC SPL transfers on Solana with on-chain confirmation
+- **Verify receipts** — Ed25519 signature verification and on-chain transaction lookup
+- **Automated flow** — single-command `v402-http.mjs call` handles the entire 402 cycle
+
+## Slash Commands
+
+| Command | Description |
 |---|---|
-| [`@v402pay/core`](packages/core) | Types, canonicalization, hashing, Solana verification, receipt signing |
-| [`@v402pay/sdk`](packages/sdk) | Client: 402 → pay → retry flow, wallet adapters (Phantom, Keypair) |
-| [`@v402pay/gateway`](packages/gateway) | Server middleware (Express/Fastify/Next.js): intents, policy, tx verification, receipts |
-| [`@v402pay/agent`](packages/agent) | **Unified agent SDK** — payments + spending policy + MCP in one import |
-| [`@v402pay/mcp-server`](packages/mcp-server) | MCP server with v402 payment-gated tools |
-| [`@v402pay/mcp-client`](packages/mcp-client) | MCP client with automatic payment and policy enforcement |
-| [`@v402pay/langchain`](packages/integrations/langchain) | LangChain integration — v402 paid tools as LangChain StructuredTools |
-| [`@v402pay/crewai`](packages/integrations/crewai) | CrewAI integration — v402 paid tools for CrewAI agents |
-| [`@v402pay/solana-agent-kit`](packages/integrations/solana-agent-kit) | Solana Agent Kit v2 plugin — spending controls for SAK agents |
-| [`v402 OpenClaw Skill`](packages/integrations/openclaw) | OpenClaw / AgentSkills skill for v402 payments (not an npm package) |
-| [`apps/web`](apps/web) | Next.js dashboard (Supabase Auth, tool registry, receipts, policies) |
+| `/v402 budget` | Show remaining daily budget |
+| `/v402 history` | View payment history |
+| `/v402 verify <receipt>` | Verify a payment receipt |
+| `/v402 wallet` | Show wallet address and balances |
 
-## Framework integrations
+## File Structure
 
-### LangChain
-
-```typescript
-import { createAgent } from "@v402pay/agent";
-import { V402LangChainTool } from "@v402pay/langchain";
-
-const agent = createAgent({ wallet, spendingPolicy: { dailyCap: 2.0 } });
-
-const searchTool = new V402LangChainTool({
-  agent,
-  mcpClient,
-  name: "web_search",
-  description: "Search the web",
-  price: "0.01",
-  currency: "USDC",
-  merchant: "MERCHANT_WALLET",
-});
-
-// Use with any LangChain agent — payment happens automatically
+```
+openclaw/
+├── SKILL.md                    # Agent instructions (injected into system prompt)
+├── README.md                   # This file
+├── scripts/
+│   ├── install.sh              # Dependency installer
+│   ├── package.json            # Script dependencies (Solana libs)
+│   ├── v402-policy.mjs         # Spending policy manager
+│   ├── v402-pay.mjs            # Solana USDC payment submission
+│   ├── v402-verify.mjs         # On-chain receipt verification
+│   └── v402-http.mjs           # Full automated 402 flow
+├── references/
+│   └── protocol-spec.md        # v402 protocol specification
+└── tests/
+    └── openclaw-skill.test.ts  # Vitest integration tests
 ```
 
-### CrewAI
+## Distribution
 
-```typescript
-import { createAgent } from "@v402pay/agent";
-import { V402CrewAITool } from "@v402pay/crewai";
+| Channel | Command |
+|---|---|
+| ClawHub | `clawhub publish` from the skill directory |
+| Direct URL | `npx skills add https://github.com/valeo-cash/v402 --skill openclaw` |
+| Manual copy | `cp -r` into `~/.openclaw/skills/v402` |
 
-const agent = createAgent({ wallet, spendingPolicy: { dailyCap: 2.0 } });
+## Links
 
-const tool = new V402CrewAITool({
-  agent,
-  mcpClient,
-  name: "code_analysis",
-  description: "Analyze code",
-  price: "0.05",
-  currency: "USDC",
-  merchant: "MERCHANT_WALLET",
-});
-```
-
-## Getting started
-
-**Prerequisites:** Node.js 20+ and pnpm (`npm install -g pnpm`).
-
-### Cloud mode (recommended)
-
-Set `V402_API_KEY` and optionally `V402_CLOUD_URL`. No database required — intents, verification, and receipts are handled by v402 Cloud.
-
-### Self-hosted
-
-Full control with your own Supabase instance:
-
-```bash
-cd infra/supabase && supabase start && supabase db push
-pnpm install && pnpm -r build
-pnpm --filter web dev
-```
-
-### Try locally
-
-```bash
-pnpm play                                          # Start seeded merchant server
-npx @v402pay/sdk http://localhost:4040/pay          # Call the paid endpoint
-```
-
-<details>
-<summary><strong>Environment variables</strong></summary>
-
-| Variable | Required | Description |
-|---|---|---|
-| `V402_API_KEY` | Cloud | v402 Cloud API key |
-| `SUPABASE_URL` | Self-hosted | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Self-hosted | Supabase anonymous key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Self-hosted | Supabase service role key |
-| `SOLANA_RPC_URL` | Self-hosted | Solana RPC endpoint |
-| `USDC_MINT` | Self-hosted | USDC SPL token mint address |
-| `ENCRYPTION_KEY` | Self-hosted | 32-byte hex key for merchant key encryption |
-
-</details>
-
-## Documentation
-
-- [Protocol spec v1](docs/spec.md)
-- [Protocol spec v2 — tool-aware intents](docs/spec-v2.md)
-- [MCP demo](examples/mcp-demo/)
-- [Integration examples](docs/integrations/)
-
-## Publishing
-
-```bash
-# Build and test
-pnpm -r build && pnpm test && pnpm -r lint
-
-# Publish (in dependency order)
-cd packages/core && npm publish --access public
-cd ../sdk && npm publish --access public
-cd ../gateway && npm publish --access public
-cd ../mcp-server && npm publish --access public
-cd ../mcp-client && npm publish --access public
-cd ../agent && npm publish --access public
-cd ../integrations/langchain && npm publish --access public
-cd ../integrations/crewai && npm publish --access public
-cd ../integrations/solana-agent-kit && npm publish --access public
-
-# OpenClaw skill — distributed via ClawHub, not npm:
-# cd packages/integrations/openclaw && clawhub publish
-
-# Tag and push
-git add -A && git commit -m "v0.3.0: tool-aware intents, MCP integration, agent SDK"
-git tag v0.3.0 && git push && git push --tags
-```
+- [v402 Protocol](https://github.com/valeo-cash/v402)
+- [Protocol Spec v2](https://github.com/valeo-cash/v402/blob/main/docs/spec-v2.md)
+- [npm packages](https://www.npmjs.com/org/v402pay)
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/valeo-cash/v402/blob/main/LICENSE)
